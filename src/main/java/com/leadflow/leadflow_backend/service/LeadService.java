@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -42,24 +43,28 @@ public class LeadService {
         log.info("Lead saved with ID: {}", savedLead.getId());
 
         if (savedLead.getEmail() != null && !savedLead.getEmail().isBlank()) {
-            try {
-                emailService.sendEmail(savedLead.getEmail(), savedLead.getName(), "AUTO_NEW_LEAD");
-                log.info("Welcome email sent to: {}", savedLead.getEmail());
-            } catch (Exception e) {
-                log.error("Failed to send welcome email: {}", e.getMessage());
-            }
+            CompletableFuture.runAsync(() -> {
+                try {
+                    emailService.sendEmail(savedLead.getEmail(), savedLead.getName(), "AUTO_NEW_LEAD");
+                    log.info("Welcome email sent to: {}", savedLead.getEmail());
+                } catch (Exception e) {
+                    log.error("Failed to send welcome email: {}", e.getMessage());
+                }
+            });
         }
 
-        try {
-            telegramService.sendMessage(
-                    savedLead.getName() != null ? savedLead.getName() : "New Lead",
-                    savedLead.getPhone() != null ? savedLead.getPhone() : "",
-                    savedLead.getSource() != null ? savedLead.getSource() : "Direct",
-                    "AUTO_NEW_LEAD", "", ""
-            );
-        } catch (Exception e) {
-            log.error("Telegram notification failed: {}", e.getMessage());
-        }
+        CompletableFuture.runAsync(() -> {
+            try {
+                telegramService.sendMessage(
+                        savedLead.getName() != null ? savedLead.getName() : "New Lead",
+                        savedLead.getPhone() != null ? savedLead.getPhone() : "",
+                        savedLead.getSource() != null ? savedLead.getSource() : "Direct",
+                        "AUTO_NEW_LEAD", "", ""
+                );
+            } catch (Exception e) {
+                log.error("Telegram notification failed: {}", e.getMessage());
+            }
+        });
 
         return mapToDTO(savedLead, new LeadDTO());
     }
