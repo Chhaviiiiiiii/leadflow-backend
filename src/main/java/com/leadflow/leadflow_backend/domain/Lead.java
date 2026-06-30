@@ -30,7 +30,7 @@ public class Lead {
     private String email;
 
     @NotBlank(message = "Phone number is mandatory")
-    @Pattern(regexp = "^[6-9]\\d{9}$", message = "Invalid phone number: Must be 10 digits and start with 6-9")
+    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number: Must be a valid phone number (10-15 digits, optional +)")
     private String phone;
     private String source;
     private LeadStatus status;
